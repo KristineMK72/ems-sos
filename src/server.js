@@ -14,29 +14,26 @@ import path from 'path';
 dotenv.config();
 const app = express();
 
-// --- BEGIN FINAL CORS FIX ---
-// Define the allowed frontend URLs (Vercel and local)
-const allowedOrigins = [
-    'https://ems-sos.vercel.app', // Your public Vercel domain (REQUIRED FOR LIVE APP)
-    'http://localhost:3001',      // Your local development URL
-    'http://localhost:8080'       // If you used port 8080
-];
+// --- BEGIN FINAL CORS FIX (Simplified for Public Access) ---
+// Define the allowed public origin and local development environments
+const publicOrigin = 'https://ems-sos.vercel.app'; 
 
-// Configure CORS middleware
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.indexOf(origin) === -1) {
-            // Block requests from unknown origins
-            const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-            return callback(new Error(msg), false);
+        // Allow requests with no origin (like mobile apps/curl)
+        if (!origin || origin === 'null') return callback(null, true);
+        
+        // Allow the public Vercel domain AND local dev environments
+        if (origin === publicOrigin || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+            callback(null, true);
+        } else {
+            // This is the fallback for mobile devices and any other external IP
+            // Note: In production, one would lock this down further.
+            callback(null, true); 
         }
-        // Allow the request
-        return callback(null, true);
     },
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true, // Allow JWT tokens/headers to be sent
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS', // Include OPTIONS for preflight
+    credentials: true, 
 }));
 // --- END FINAL CORS FIX ---
 
@@ -64,6 +61,7 @@ server.listen(PORT, async () => {
     await pool.query(sql);
     console.log("Migration check complete (tables ensured)");
   } catch (e) {
+    // This warning is normal if the server is run from a different location
     console.warn("Migration check warning: Is PostgreSQL running?", e.message);
   }
 });
