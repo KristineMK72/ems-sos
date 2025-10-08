@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: ems_admin
+      POSTGRES_PASSWORD: strongpassword
+      POSTGRES_DB: ems_sos
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: npm run dev
+    environment:
+      POSTGRES_USER: ems_admin
+      POSTGRES_PASSWORD: strongpassword
+      POSTGRES_DB: ems_sos
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      JWT_SECRET: supersecret_change_this_to_a_long_key
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - db
+
+volumes:
+  db-data:
