@@ -1,6 +1,9 @@
 // src/api.js
 // API_BASE must match the port your backend Docker container is exposing
-export const API_BASE = "http://localhost:5000";
+export const API_BASE = import.meta.env.PROD
+  ? "https://ems-sos.onrender.com"
+  : "http://localhost:5000";
+
 
 export async function post(path, body, token) {
   const res = await fetch(`${API_BASE}${path}`, {
